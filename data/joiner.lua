@@ -1,4 +1,4 @@
--- Notasnek Joiner (Floating Button Only) — Simple auto-joiner
+-- Notasnek Joiner 
 local PROVIDER = "Notasnek"
 local SERVICE = "Notasnek Joiner"
 
@@ -8,10 +8,10 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local VIM = game:GetService("VirtualInputManager")
 
--- ===== Simple logging =====
+
 local function log(s) print("[Notasnek] " .. tostring(s)) end
 
--- ===== Queue =====
+
 local queue, pumping = {}, false
 local function pushMessage(item) table.insert(queue, item) end
 local function pumpQueue(processJob)
@@ -33,7 +33,7 @@ local function pumpQueue(processJob)
     end)
 end
 
--- ===== Strict resolver for Chilli Hub Premium UI =====
+
 local ROOT_NAME = "Steal a Brainot - Chilli Hub Premium"
 local _RESOLVED_LOCK = false
 local _JOB_TB, _JOIN_BTN, _SERVER = nil, nil, nil
@@ -59,11 +59,11 @@ local function resolveOnce()
         return false
     end
 
-    -- TextBox path
+
     local okTB, tb = pcall(function()
         return root.MainFrame.ContentContainer.TabContent_Server.Input.TextBox
     end)
-    -- Join button path
+    
     local okJB, jb = pcall(function()
         local container = root.MainFrame.ContentContainer.TabContent_Server
         local fifth = container:GetChildren()[5]
@@ -98,7 +98,7 @@ local function getUI()
     return nil
 end
 
--- ===== Actions: type + click =====
+
 local function pressEnter()
     pcall(function() VIM:SendKeyEvent(true, Enum.KeyCode.Return, false, game) end)
     pcall(function() VIM:SendKeyEvent(false, Enum.KeyCode.Return, false, game) end)
@@ -162,7 +162,6 @@ local function clickJoin()
     return true
 end
 
--- ===== Message handling =====
 local function bypassJob(jobId)
     local tb = setJobIDText(jobId)
     if not tb then return end
@@ -188,7 +187,7 @@ end
 local function handleIncomingMessage(msg)
     if type(msg) ~= "string" then return end
     
-    -- New message handling like the second script
+    
     if not string.find(msg, "TeleportService") then
         log("Bypassing 10m server: " .. msg)
         pushMessage({kind = "job", id = msg})
@@ -198,7 +197,7 @@ local function handleIncomingMessage(msg)
     end
 end
 
--- ===== Floating Button =====
+
 local function createFloatingButton()
     local Gui = Instance.new("ScreenGui")
     Gui.Name = "NotasnekJoiner"
@@ -231,7 +230,7 @@ local function createFloatingButton()
     StatusLabel.Text = "Checking UI..."
     StatusLabel.Parent = Gui
 
-    -- Function to update UI status
+    
     local function updateUIStatus()
         local tb, btn = getUI()
         if tb and btn then
@@ -243,7 +242,7 @@ local function createFloatingButton()
         end
     end
 
-    -- Update UI status periodically
+    
     local statusCheckThread
     local function startStatusChecking()
         if statusCheckThread then return end
@@ -335,7 +334,7 @@ local function createFloatingButton()
     end)
 end
 
--- ===== Launch =====
+
 local function beginApp()
     createFloatingButton()
 end
@@ -345,3 +344,4 @@ if game:IsLoaded() then
 else
     game.Loaded:Once(beginApp)
 end
+
