@@ -1,17 +1,17 @@
--- Notasnek Joiner 
+-- Notasnek Joiner (Floating Button Only) — Simple auto-joiner
 local PROVIDER = "Notasnek"
 local SERVICE = "Notasnek Joiner"
 
-
+-- Services
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local VIM = game:GetService("VirtualInputManager")
 
-
+-- ===== Simple logging =====
 local function log(s) print("[Notasnek] " .. tostring(s)) end
 
-
+-- ===== Queue =====
 local queue, pumping = {}, false
 local function pushMessage(item) table.insert(queue, item) end
 local function pumpQueue(processJob)
@@ -22,15 +22,18 @@ local function pumpQueue(processJob)
             local item = table.remove(queue, 1)
             if item.kind == "job" then
                 processJob(item.id)
+                RunService.Heartbeat:Wait()
+                RunService.Heartbeat:Wait()
             elseif item.kind == "script" then
                 item.func()
+                RunService.Heartbeat:Wait()
             end
         end
         pumping = false
     end)
 end
 
-
+-- ===== Strict resolver for Chilli Hub Premium UI =====
 local ROOT_NAME = "Steal a Brainot - Chilli Hub Premium"
 local _RESOLVED_LOCK = false
 local _JOB_TB, _JOIN_BTN, _SERVER = nil, nil, nil
@@ -56,11 +59,11 @@ local function resolveOnce()
         return false
     end
 
-  
+    -- TextBox path
     local okTB, tb = pcall(function()
         return root.MainFrame.ContentContainer.TabContent_Server.Input.TextBox
     end)
- 
+    -- Join button path
     local okJB, jb = pcall(function()
         local container = root.MainFrame.ContentContainer.TabContent_Server
         local fifth = container:GetChildren()[5]
@@ -95,7 +98,7 @@ local function getUI()
     return nil
 end
 
-
+-- ===== Actions: type + click =====
 local function pressEnter()
     pcall(function() VIM:SendKeyEvent(true, Enum.KeyCode.Return, false, game) end)
     pcall(function() VIM:SendKeyEvent(false, Enum.KeyCode.Return, false, game) end)
@@ -159,11 +162,11 @@ local function clickJoin()
     return true
 end
 
-
+-- ===== Message handling =====
 local function bypassJob(jobId)
     local tb = setJobIDText(jobId)
     if not tb then return end
-    
+    RunService.Heartbeat:Wait()
     local success = pcall(clickJoin)
     if not success then
         log("Server full or failed to join")
@@ -185,7 +188,7 @@ end
 local function handleIncomingMessage(msg)
     if type(msg) ~= "string" then return end
     
-    
+    -- New message handling like the second script
     if not string.find(msg, "TeleportService") then
         log("Bypassing 10m server: " .. msg)
         pushMessage({kind = "job", id = msg})
@@ -195,7 +198,7 @@ local function handleIncomingMessage(msg)
     end
 end
 
-
+-- ===== Floating Button =====
 local function createFloatingButton()
     local Gui = Instance.new("ScreenGui")
     Gui.Name = "NotasnekJoiner"
@@ -210,7 +213,7 @@ local function createFloatingButton()
     StartBtn.Position = UDim2.new(0.5, 0, 0.07, 0)
     StartBtn.BackgroundColor3 = Color3.fromRGB(44, 42, 54)
     StartBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    StartBtn.Text = "Start Notasnek (OFF)"
+    StartBtn.Text = "Notasnek (OFF)"
     StartBtn.TextSize = 18
     StartBtn.AutoButtonColor = true
     StartBtn.Parent = Gui
@@ -228,18 +231,6 @@ local function createFloatingButton()
     StatusLabel.Text = "Checking UI..."
     StatusLabel.Parent = Gui
 
-    -- Job ID Display Label
-    local JobIdLabel = Instance.new("TextLabel")
-    JobIdLabel.Name = "JobIdDisplay"
-    JobIdLabel.Size = UDim2.new(0, 200, 0, 25)
-    JobIdLabel.AnchorPoint = Vector2.new(0.5, 0)
-    JobIdLabel.Position = UDim2.new(0.5, 0, 0.17, 0)
-    JobIdLabel.BackgroundTransparency = 1
-    JobIdLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
-    JobIdLabel.TextSize = 14
-    JobIdLabel.Text = "Last Job: None"
-    JobIdLabel.Parent = Gui
-
     -- Function to update UI status
     local function updateUIStatus()
         local tb, btn = getUI()
@@ -250,23 +241,6 @@ local function createFloatingButton()
             StatusLabel.Text = "UI Status: Not Found ✗"
             StatusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
         end
-    end
-
-    -- Function to update job ID display
-    local function updateJobIdDisplay(jobId)
-        local displayText = "Last Job: " .. tostring(jobId):sub(1, 12)
-        if #tostring(jobId) > 12 then
-            displayText = displayText .. "..."
-        end
-        JobIdLabel.Text = displayText
-        
-        -- Flash effect
-        JobIdLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-        task.delay(1, function()
-            if JobIdLabel.Parent then
-                JobIdLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
-            end
-        end)
     end
 
     -- Update UI status periodically
@@ -291,20 +265,6 @@ local function createFloatingButton()
         return nil
     end
 
-    -- Modified bypassJob with job ID display
-    local function bypassJobWithDisplay(jobId)
-        local tb = setJobIDText(jobId)
-        if not tb then return end
-        
-     
-        updateJobIdDisplay(jobId)
-        
-        local success = pcall(clickJoin)
-        if not success then
-            log("Server full or failed to join")
-        end
-    end
-
     local function startAutoJoiner()
         if running then return end
         running = true
@@ -323,7 +283,7 @@ local function createFloatingButton()
                 if ok and socket then
                     socket.OnMessage:Connect(function(m)
                         handleIncomingMessage(m)
-                        pumpQueue(function(jobId) bypassJobWithDisplay(jobId) end)
+                        pumpQueue(function(jobId) bypassJob(jobId) end)
                     end)
                     local closed = false
                     socket.OnClose:Connect(function() closed = true end)
@@ -375,7 +335,7 @@ local function createFloatingButton()
     end)
 end
 
---  Launch 
+-- ===== Launch =====
 local function beginApp()
     createFloatingButton()
 end
